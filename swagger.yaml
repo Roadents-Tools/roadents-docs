@@ -2,6 +2,12 @@ openapi: 3.0.0
 info:
   version: 0.1.0
   title: Reroute API
+  description: >
+    The API to use Reroute's set of time-based navigation services.
+  contact:
+    name: Reroute API Team
+    url: www.rerouteapi.net
+
 servers:
   - url: 'http://www.rerouteapi.com/api/v0'
 security:
@@ -154,6 +160,7 @@ components:
       in: "header"
   schemas:
     Location:
+      description: A point on the planet earth.
       type: object
       required:
         - latitude
@@ -172,15 +179,15 @@ components:
           maximum: 180
           description: The longitude of the location.
     Start:
+      description: The location passed in to the method.
       allOf:
         - $ref: "#/components/schemas/Location"
         - type: object
-          description: The location passed in to the method.
     Station:
+      description: A public transit station.
       allOf:
         - $ref: "#/components/schemas/Location"
         - type: object
-          description: A public transit station.
           required:
             - name
           properties:
@@ -188,10 +195,10 @@ components:
               type: string
               description: The name of the station, like "23rd and 2nd".
     Destination:
+      description: A non-station location that meets a method's query parameters.
       allOf:
         - $ref: "#/components/schemas/Location"
         - type: object
-          description: A non-station location that meets a method's query parameters.
           required:
             - name
             - categories
@@ -205,6 +212,7 @@ components:
               items:
                 type: string
     RouteStep:
+      description: A singe step in a route.
       type: object
       required:
         - step_type
@@ -242,10 +250,10 @@ components:
           allOf:
             - $ref: "#/components/schemas/Location"
     StartWalkStep:
+      description: A step representing walking away from the Start location.
       allOf:
         - $ref: '#/components/schemas/RouteStep'
         - type: object
-          description: A step representing walking away from the Start location.
           required:
             - start_pt
             - end_pt
@@ -264,6 +272,7 @@ components:
               type: integer
               format: int32
     TransferWalkStep:
+      description: A step representing walking from one station to another.
       allOf:
         - $ref: '#/components/schemas/RouteStep'
         - type: object
@@ -285,6 +294,7 @@ components:
               type: integer
               format: int32
     DestinationWalkStep:
+      description: A step representing walking from a station to a destination.
       allOf:
         - $ref: '#/components/schemas/RouteStep'
         - type: object
@@ -306,6 +316,7 @@ components:
               type: integer
               format: int32
     FullRouteWalkStep:
+      description: A step representing walking from the start location to a destination without stopping.
       allOf:
         - $ref: '#/components/schemas/RouteStep'
         - type: object
@@ -327,6 +338,7 @@ components:
               type: integer
               format: int32
     TransitStep:
+      description: A step representing using a form of public transit.
       allOf:
         - $ref: '#/components/schemas/RouteStep'
         - type: object
@@ -397,10 +409,12 @@ components:
           items:
             $ref: '#/components/schemas/RouteStep'
     RouteList:
+      description: An list of routes.
       type: array
       items:
         $ref: '#/components/schemas/Route'
     Error:
+      description: An HTTP error.
       required:
         - code
         - message
