@@ -54,6 +54,10 @@ Base URLs:
 
 <h2 id="tocS{{=s.toLowerCase()}}">{{=s}}</h2>
 
+{{? schema.description || origSchema.description}}
+{{=schema.description || origSchema.description || 'ERR IN DESC'}}
+{{?}}
+
 <a id="schema{{=s.toLowerCase()}}"></a>
 
 ```json
