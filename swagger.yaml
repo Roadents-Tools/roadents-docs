@@ -1,0 +1,414 @@
+openapi: 3.0.0
+info:
+  version: 0.1.0
+  title: Reroute API
+servers:
+  - url: 'http://www.rerouteapi.com/api/v0'
+security:
+  - ApiKeyAuth : []
+paths:
+  /generator:
+    get:
+      summary: Runs the Generator route-finding algorithm.
+      description: >
+        Finds all routes meeting a given query thatcan be reached in a certain
+        time from a given starting point. The routes can be filtered and
+        limited in a variety of ways.
+      operationId: Generator
+      tags:
+        - API Methods
+      parameters:
+        - name: latitude
+          in: query
+          description: The latitude of the starting location.
+          required: true
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+        - name: longitude
+          in: query
+          description: The longitude of the starting location.
+          required: true
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+        - name: query
+          in: query
+          description: The keyword to use to search for destinations.
+          required: true
+          schema:
+            type: string
+        - name: total_time
+          in: query
+          description: The maximum seconds any route can take.
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 60
+            maximum: 10800
+        - name: departure_time
+          in: query
+          description: The time to start at, in seconds since midnight, Jan 1, 1970 GMT. Can also pass -1 to use the current time.
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: -1
+            default: -1
+        - name: max_walk_time
+          in: query
+          description: The maximum amount of seconds spent walking over the course of a route.
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: max_step_walk_time
+          in: query
+          description: The maximum amount of seconds spent walking between any 2 points.
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 60
+            maximum: 900
+            default: 300
+        - name: max_wait_time
+          in: query
+          description: The maximum seconds spent waiting for transit over the course of a route.
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 60
+        - name: max_step_wait_time
+          in: query
+          description: The maximum seconds spent waiting for transit between any 2 points.
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 60
+        - name: min_step_wait_time
+          in: query
+          description: The minimum seconds spent waiting for transit when taking transit.
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 30
+            default: 60
+        - name: min_dist
+          in: query
+          description: The minimum distance, in meters, that a route's destination is from the start location.
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 10
+        - name: steps
+          in: query
+          description: The maximum number of steps over the course of the route.
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+            maximum: 10
+            default: 5
+        - name: limit
+          in: query
+          description: The maximum number of routes to return.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: The list of routes meeting the passed filters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteList'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      description: "The API key to use for usage tracking."
+      type: "apiKey"
+      name: "x-api-key"
+      in: "header"
+  schemas:
+    Location:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: The latitude of the location.
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: The longitude of the location.
+    Start:
+      allOf:
+        - $ref: "#/components/schemas/Location"
+        - type: object
+          description: The location passed in to the method.
+    Station:
+      allOf:
+        - $ref: "#/components/schemas/Location"
+        - type: object
+          description: A public transit station.
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: The name of the station, like "23rd and 2nd".
+    Destination:
+      allOf:
+        - $ref: "#/components/schemas/Location"
+        - type: object
+          description: A non-station location that meets a method's query parameters.
+          required:
+            - name
+            - categories
+          properties:
+            name:
+              type: string
+              description: The name of this location.
+            categories:
+              type: array
+              description: A list of keyword-style categories that apply to this location, like "Park".
+              items:
+                type: string
+    RouteStep:
+      type: object
+      required:
+        - step_type
+        - total_time
+        - start_pt
+        - end_pt
+      discriminator:
+        propertyName: step_type
+        mapping:
+          transit: '#/components/schemas/TransitStep'
+          walk_start: '#/components/schemas/StartWalkStep'
+          walk_dest: '#/components/schemas/DestinationWalkStep'
+          walk_transfer: '#/components/schemas/TransferWalkStep'
+          walk_full_route: '#/components/schemas/FullRouteWalkStep'
+      properties:
+        total_time:
+          type: integer
+          format: int64
+          description: Time in seconds spend in this step.
+        step_type:
+          description: The type of step this is.
+          type: string
+          enum:
+            - transit
+            - walk_start
+            - walk_dest
+            - walk_transfer
+            - walk_full_route
+        start_pt:
+          description: The place that this step starts at.
+          allOf:
+            - $ref: "#/components/schemas/Location"
+        end_pt:
+          description: The place that this step ends at.
+          allOf:
+            - $ref: "#/components/schemas/Location"
+    StartWalkStep:
+      allOf:
+        - $ref: '#/components/schemas/RouteStep'
+        - type: object
+          description: A step representing walking away from the Start location.
+          required:
+            - start_pt
+            - end_pt
+            - walk_distance
+            - step_type
+          properties:
+            start_pt:
+              $ref: '#/components/schemas/Start'
+            end_pt:
+              $ref: '#/components/schemas/Station'
+            step_type:
+              type: string
+              enum:
+                - walk_start
+            walk_distance:
+              type: integer
+              format: int32
+    TransferWalkStep:
+      allOf:
+        - $ref: '#/components/schemas/RouteStep'
+        - type: object
+          required:
+            - start_pt
+            - end_pt
+            - walk_distance
+            - step_type
+          properties:
+            start_pt:
+              $ref: '#/components/schemas/Station'
+            end_pt:
+              $ref: '#/components/schemas/Station'
+            step_type:
+              type: string
+              enum:
+                - walk_transfer
+            walk_distance:
+              type: integer
+              format: int32
+    DestinationWalkStep:
+      allOf:
+        - $ref: '#/components/schemas/RouteStep'
+        - type: object
+          required:
+            - start_pt
+            - end_pt
+            - walk_distance
+            - step_type
+          properties:
+            start_pt:
+              $ref: '#/components/schemas/Station'
+            end_pt:
+              $ref: '#/components/schemas/Destination'
+            step_type:
+              type: string
+              enum:
+                - walk_dest
+            walk_distance:
+              type: integer
+              format: int32
+    FullRouteWalkStep:
+      allOf:
+        - $ref: '#/components/schemas/RouteStep'
+        - type: object
+          required:
+            - start_pt
+            - end_pt
+            - walk_distance
+            - step_type
+          properties:
+            start_pt:
+              $ref: '#/components/schemas/Start'
+            end_pt:
+              $ref: '#/components/schemas/Destination'
+            step_type:
+              type: string
+              enum:
+                - walk_full_route
+            walk_distance:
+              type: integer
+              format: int32
+    TransitStep:
+      allOf:
+        - $ref: '#/components/schemas/RouteStep'
+        - type: object
+          required:
+            - start_pt
+            - end_pt
+            - wait_time
+            - travel_time
+            - agency
+            - route
+            - stops
+            - transit_type
+            - step_type
+          properties:
+            start_pt:
+              $ref: '#/components/schemas/Station'
+            end_pt:
+              $ref: '#/components/schemas/Station'
+            step_type:
+              type: string
+              enum:
+                - transit
+            wait_time:
+              type: integer
+              format: int32
+            travel_time:
+              type: integer
+              format: int32
+            agency:
+              type: string
+            route:
+              type: string
+            stops:
+              type: integer
+              format: int32
+            transit_type:
+              type: string
+              enum:
+                - bus
+                - train
+                - ferry
+                - misc
+    Route:
+      type: object
+      description: A series of steps leading from one location to another.
+      required:
+        - start_pt
+        - end_pt
+        - start_time
+        - total_time
+        - steps
+      properties:
+        start_pt:
+          $ref: '#/components/schemas/Start'
+        end_pt:
+          $ref: '#/components/schemas/Destination'
+        start_time:
+          type: integer
+          format: int64
+          description: The time the route begins, in seconds since midnight Jan 1, 1970, GMT.
+        total_time:
+          type: integer
+          format: int64
+          description: The number of seconds the route takes.
+        steps:
+          type: array
+          description: The list of steps to get from start_pt to end_pt.
+          items:
+            $ref: '#/components/schemas/RouteStep'
+    RouteList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Route'
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: The HTTP status code.
+        message:
+          type: string
+          description: The text of the error.

@@ -1,0 +1,39 @@
+<h3 id="{{=data.operationUniqueName}}-parameters">Parameters</h3>
+
+|Parameter|Description|Required|Type|Min|Max|Default|
+|---|---|---|---|---|---|---|
+{{~ data.parameters :p}}|{{=p.name}}|{{=p.shortDesc || 'No description'}}|{{=p.required}}|{{=p.safeType}}|{{=p.schema.minimum || 'N/A'}}|{{=p.schema.maximum || 'N/A'}}|{{=p.schema.default ||'N/A'}}|
+{{~}}
+
+
+{{? data.longDescs }}
+#### Detailed descriptions
+{{~ data.parameters :p}}{{? p.shortDesc !== p.description}}
+**{{=p.name}}**: {{=p.description}}{{?}}
+{{~}}
+{{?}}
+
+{{~ data.parameters :p}}
+
+{{? p.schema && p.schema.enum }}
+{{~ p.schema.enum :e}}
+{{ var entry = {}; entry.name = p.name; entry.value = e; data.enums.push(entry); }}
+{{~}}
+{{?}}
+
+{{? p.schema && p.schema.items && p.schema.items.enum }}
+{{~ p.schema.items.enum :e}}
+{{ var entry = {}; entry.name = p.name; entry.value = e; data.enums.push(entry); }}
+{{~}}
+{{?}}
+
+{{~}}
+
+{{? data.enums && data.enums.length }}
+#### Enumerated Values
+
+|Parameter|Value|
+|---|---|
+{{~ data.enums :e}}|{{=e.name}}|{{=e.value}}|
+{{~}}
+{{?}}
