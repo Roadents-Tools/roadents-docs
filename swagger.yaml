@@ -159,58 +159,42 @@ components:
       name: "x-api-key"
       in: "header"
   schemas:
-    Location:
-      description: A point on the planet earth.
+    RouteList:
+      description: An list of routes.
+      type: array
+      items:
+        $ref: '#/components/schemas/Route'
+    Route:
       type: object
+      description: A series of steps leading from one location to another.
       required:
-        - latitude
-        - longitude
+        - start_pt
+        - end_pt
+        - start_time
+        - total_time
+        - steps
       properties:
-        latitude:
-          type: number
-          format: double
-          minimum: -90
-          maximum: 90
-          description: The latitude of the location.
-        longitude:
-          type: number
-          format: double
-          minimum: -180
-          maximum: 180
-          description: The longitude of the location.
-    Start:
-      description: The location passed in to the method.
-      allOf:
-        - $ref: "#/components/schemas/Location"
-        - type: object
-    Station:
-      description: A public transit station.
-      allOf:
-        - $ref: "#/components/schemas/Location"
-        - type: object
-          required:
-            - name
-          properties:
-            name:
-              type: string
-              description: The name of the station, like "23rd and 2nd".
-    Destination:
-      description: A non-station location that meets a method's query parameters.
-      allOf:
-        - $ref: "#/components/schemas/Location"
-        - type: object
-          required:
-            - name
-            - categories
-          properties:
-            name:
-              type: string
-              description: The name of this location.
-            categories:
-              type: array
-              description: A list of keyword-style categories that apply to this location, like "Park".
-              items:
-                type: string
+        start_pt:
+          description: The location the route starts at.
+          allOf:
+            - $ref: '#/components/schemas/Start'
+        end_pt:
+          description: The location the route ends at.
+          allOf:
+            - $ref: '#/components/schemas/Destination'
+        start_time:
+          type: integer
+          format: int64
+          description: The time the route begins, in seconds since midnight Jan 1, 1970, GMT.
+        total_time:
+          type: integer
+          format: int64
+          description: The number of seconds the route takes.
+        steps:
+          type: array
+          description: The list of steps to get from start_pt to end_pt.
+          items:
+            $ref: '#/components/schemas/RouteStep'
     RouteStep:
       description: A singe step in a route.
       type: object
@@ -411,42 +395,58 @@ components:
               type: string
               enum:
                 - transit
-    Route:
+    Location:
+      description: A point on the planet earth.
       type: object
-      description: A series of steps leading from one location to another.
       required:
-        - start_pt
-        - end_pt
-        - start_time
-        - total_time
-        - steps
+        - latitude
+        - longitude
       properties:
-        start_pt:
-          description: The location the route starts at.
-          allOf:
-            - $ref: '#/components/schemas/Start'
-        end_pt:
-          description: The location the route ends at.
-          allOf:
-            - $ref: '#/components/schemas/Destination'
-        start_time:
-          type: integer
-          format: int64
-          description: The time the route begins, in seconds since midnight Jan 1, 1970, GMT.
-        total_time:
-          type: integer
-          format: int64
-          description: The number of seconds the route takes.
-        steps:
-          type: array
-          description: The list of steps to get from start_pt to end_pt.
-          items:
-            $ref: '#/components/schemas/RouteStep'
-    RouteList:
-      description: An list of routes.
-      type: array
-      items:
-        $ref: '#/components/schemas/Route'
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: The latitude of the location.
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: The longitude of the location.
+    Start:
+      description: The location passed in to the method.
+      allOf:
+        - $ref: "#/components/schemas/Location"
+        - type: object
+    Station:
+      description: A public transit station.
+      allOf:
+        - $ref: "#/components/schemas/Location"
+        - type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: The name of the station, like "23rd and 2nd".
+    Destination:
+      description: A non-station location that meets a method's query parameters.
+      allOf:
+        - $ref: "#/components/schemas/Location"
+        - type: object
+          required:
+            - name
+            - categories
+          properties:
+            name:
+              type: string
+              description: The name of this location.
+            categories:
+              type: array
+              description: A list of keyword-style categories that apply to this location, like "Park".
+              items:
+                type: string
     Error:
       description: An HTTP error.
       required:
