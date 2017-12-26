@@ -261,16 +261,21 @@ components:
             - step_type
           properties:
             start_pt:
-              $ref: '#/components/schemas/Start'
+              description: The inputted location of the route.
+              allOf:
+                - $ref: '#/components/schemas/Start'
             end_pt:
-              $ref: '#/components/schemas/Station'
+              description: The station to walk to.
+              allOf:
+                - $ref: '#/components/schemas/Station'
+            walk_distance:
+              description: The distance walked in this step.
+              type: integer
+              format: int32
             step_type:
               type: string
               enum:
                 - walk_start
-            walk_distance:
-              type: integer
-              format: int32
     TransferWalkStep:
       description: A step representing walking from one station to another.
       allOf:
@@ -283,16 +288,21 @@ components:
             - step_type
           properties:
             start_pt:
-              $ref: '#/components/schemas/Station'
+              description: The station we are transfering from.
+              allOf:
+                - $ref: '#/components/schemas/Station'
             end_pt:
-              $ref: '#/components/schemas/Station'
+              description: The station we are transfering to.
+              allOf:
+                - $ref: '#/components/schemas/Station'
+            walk_distance:
+              description: The distance walked in this step.
+              type: integer
+              format: int32
             step_type:
               type: string
               enum:
                 - walk_transfer
-            walk_distance:
-              type: integer
-              format: int32
     DestinationWalkStep:
       description: A step representing walking from a station to a destination.
       allOf:
@@ -305,16 +315,21 @@ components:
             - step_type
           properties:
             start_pt:
-              $ref: '#/components/schemas/Station'
+              description: The station we are starting at.
+              allOf:
+                - $ref: '#/components/schemas/Station'
             end_pt:
-              $ref: '#/components/schemas/Destination'
+              description: The destination we walk to.
+              allOf:
+                - $ref: '#/components/schemas/Destination'
+            walk_distance:
+              description: The distance we walk between the final station and the destination.
+              type: integer
+              format: int32
             step_type:
               type: string
               enum:
                 - walk_dest
-            walk_distance:
-              type: integer
-              format: int32
     FullRouteWalkStep:
       description: A step representing walking from the start location to a destination without stopping.
       allOf:
@@ -327,16 +342,21 @@ components:
             - step_type
           properties:
             start_pt:
-              $ref: '#/components/schemas/Start'
+              description: The inputted start location.
+              allOf:
+                - $ref: '#/components/schemas/Start'
             end_pt:
-              $ref: '#/components/schemas/Destination'
+              description: The final destination.
+              allOf:
+                - $ref: '#/components/schemas/Destination'
+            walk_distance:
+              description: The distance we walk between the start location and the final destination.
+              type: integer
+              format: int32
             step_type:
               type: string
               enum:
                 - walk_full_route
-            walk_distance:
-              type: integer
-              format: int32
     TransitStep:
       description: A step representing using a form of public transit.
       allOf:
@@ -354,33 +374,43 @@ components:
             - step_type
           properties:
             start_pt:
-              $ref: '#/components/schemas/Station'
+              description: The station we begin the step at.
+              allOf:
+                - $ref: '#/components/schemas/Station'
             end_pt:
-              $ref: '#/components/schemas/Station'
-            step_type:
-              type: string
-              enum:
-                - transit
+              description: The station we end the step at.
+              allOf:
+                - $ref: '#/components/schemas/Station'
             wait_time:
+              description: The number of seconds waiting at start_pt for the transit method to arrive.
               type: integer
               format: int32
             travel_time:
+              description: The number of seconds spent travelling in the public transit method.
               type: integer
               format: int32
             agency:
+              description: The name of the agency that is used to travel in this step.
               type: string
             route:
+              description: The name of the route taken in this step.
               type: string
             stops:
+              description: The number of stops travelled in this step.
               type: integer
               format: int32
             transit_type:
+              description: The type of transit used in this step.
               type: string
               enum:
                 - bus
                 - train
                 - ferry
                 - misc
+            step_type:
+              type: string
+              enum:
+                - transit
     Route:
       type: object
       description: A series of steps leading from one location to another.
@@ -392,9 +422,13 @@ components:
         - steps
       properties:
         start_pt:
-          $ref: '#/components/schemas/Start'
+          description: The location the route starts at.
+          allOf:
+            - $ref: '#/components/schemas/Start'
         end_pt:
-          $ref: '#/components/schemas/Destination'
+          description: The location the route ends at.
+          allOf:
+            - $ref: '#/components/schemas/Destination'
         start_time:
           type: integer
           format: int64
