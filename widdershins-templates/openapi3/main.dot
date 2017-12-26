@@ -79,12 +79,12 @@ Base URLs:
 
 ### Properties
 
-{{~ blocks :block}}
+{{~ blocks.filter(b => {return b.rows.filter(p => {return p.safeType != 'object'|| p.required === true || p.description}).length > 0}) :block}}
 {{? !block.title }}{{??}}*{{= block.title}}*{{= '\n\n'}}{{?}}
-{{? block.rows.length}}|Name|Type|Required|Description|
+{{? block.rows.filter(p => {return p.safeType != 'object'|| p.required === true || p.description}).length}}|Name|Type|Required|Description|
 |---|---|---|---|{{?}}
-{{~ block.rows :p}}|{{=p.displayName}}|{{=p.safeType}}|{{=p.required}}|{{=p.description||'No description'}}|
-{{~}}
+{{~ block.rows :p}}{{? p.safeType != 'object'|| p.required === true || p.description}}|{{=p.displayName}}|{{=p.safeType}}|{{=p.required}}|{{=p.description||'No description'}}|
+{{?}}{{~}}
 {{~}}
 {{? (blocks[0].rows.length === 0) && (blocks.length === 1) }}
 *None*
