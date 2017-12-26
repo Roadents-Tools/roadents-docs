@@ -4,6 +4,10 @@ info:
   title: Reroute API
   description: >
     The API to use Reroute's set of time-based navigation services.
+
+
+    Note that the API is currently in Beta, and as such only the
+    Generator algorithm is available for use.
   contact:
     name: Reroute API Team
     url: www.rerouteapi.net
