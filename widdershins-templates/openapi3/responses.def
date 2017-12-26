@@ -36,7 +36,7 @@ Status Code **{{=response.status}}**
 |Name|Type|Required|Description|
 |---|---|---|---|{{??}}*{{=block.title}}*
 {{?}}
-{{~block.rows :p}}|{{=p.displayName}}|{{=p.safeType}}|{{=p.required}}|{{=p.description||'No description'}}|
+{{~block.rows.filter(p => {return p.depth == 0 || block.rows[0].safeType[0] !== '['}) :p}}|{{=p.displayName}}|{{=p.safeType}}|{{=p.required||data.utils.isPrimitive(p.safeType)}}|{{=p.description||'No description'}}|
 {{~}}
 {{~}}
 
