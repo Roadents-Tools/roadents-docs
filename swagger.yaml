@@ -21,7 +21,7 @@ paths:
     get:
       summary: Runs the Generator route-finding algorithm.
       description: >
-        Finds all routes meeting a given query thatcan be reached in a certain
+        Finds all routes meeting a given query that can be reached in a certain
         time from a given starting point. The routes can be filtered and
         limited in a variety of ways.
       operationId: Generator
