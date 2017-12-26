@@ -6,14 +6,16 @@ info:
     The API to use Reroute's set of time-based navigation services.
 
 
-    Note that the API is currently in Beta, and as such only the
-    Generator algorithm is available for use.
+    Note that the API is currently in Beta, and therefore this document
+    is subject to change. Currently only the Generator algorithm is
+    available, but all other algorithms will be introduced into the Beta
+    shortly.
   contact:
     name: Reroute API Team
-    url: www.rerouteapi.net
+    url: http://www.rerouteapi.net
 
 servers:
-  - url: 'http://www.rerouteapi.com/api/v0'
+  - url: 'https://api.rerouteapi.net/api/v0'
 security:
   - ApiKeyAuth : []
 paths:
