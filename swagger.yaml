@@ -142,15 +142,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RouteList'
-        default:
+                type: array
+                description: The routes meeting the query.
+                items:
+                  $ref: '#/components/schemas/Route'
+        'default':
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-
-
+                type: object
+                description: An HTTP error.
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    type: integer
+                    format: int32
+                    description: The HTTP status code.
+                  message:
+                    type: string
+                    description: The text of the error.
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -159,11 +172,6 @@ components:
       name: "x-api-key"
       in: "header"
   schemas:
-    RouteList:
-      description: An list of routes.
-      type: array
-      items:
-        $ref: '#/components/schemas/Route'
     Route:
       type: object
       description: A series of steps leading from one location to another.
@@ -447,16 +455,3 @@ components:
               description: A list of keyword-style categories that apply to this location, like "Park".
               items:
                 type: string
-    Error:
-      description: An HTTP error.
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: integer
-          format: int32
-          description: The HTTP status code.
-        message:
-          type: string
-          description: The text of the error.
