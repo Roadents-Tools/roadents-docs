@@ -189,11 +189,11 @@ components:
         start_pt:
           description: The location the route starts at.
           allOf:
-            - $ref: '#/components/schemas/Start'
+            - $ref: '#/components/schemas/Location'
         end_pt:
           description: The location the route ends at.
           allOf:
-            - $ref: '#/components/schemas/Destination'
+            - $ref: '#/components/schemas/Location'
         start_time:
           type: integer
           format: int64
@@ -219,10 +219,7 @@ components:
         propertyName: step_type
         mapping:
           transit: '#/components/schemas/TransitStep'
-          walk_start: '#/components/schemas/StartWalkStep'
-          walk_dest: '#/components/schemas/DestinationWalkStep'
-          walk_transfer: '#/components/schemas/TransferWalkStep'
-          walk_full_route: '#/components/schemas/FullRouteWalkStep'
+          walk: '#/components/schemas/WalkStep'
       properties:
         total_time:
           type: integer
@@ -233,10 +230,7 @@ components:
           type: string
           enum:
             - transit
-            - walk_start
-            - walk_dest
-            - walk_transfer
-            - walk_full_route
+            - walk
         start_pt:
           description: The place that this step starts at.
           allOf:
@@ -245,114 +239,24 @@ components:
           description: The place that this step ends at.
           allOf:
             - $ref: "#/components/schemas/Location"
-    StartWalkStep:
+    WalkStep:
       description: A step representing walking away from the Start location.
       allOf:
         - $ref: '#/components/schemas/RouteStep'
         - type: object
           required:
-            - start_pt
-            - end_pt
             - walk_distance
             - step_type
           properties:
-            start_pt:
-              description: The inputted location of the route.
-              allOf:
-                - $ref: '#/components/schemas/Start'
-            end_pt:
-              description: The station to walk to.
-              allOf:
-                - $ref: '#/components/schemas/Station'
             walk_distance:
               description: The distance walked in this step.
               type: integer
               format: int32
             step_type:
+              description: WalkSteps have a "step_type" value of "walk".
               type: string
               enum:
-                - walk_start
-    TransferWalkStep:
-      description: A step representing walking from one station to another.
-      allOf:
-        - $ref: '#/components/schemas/RouteStep'
-        - type: object
-          required:
-            - start_pt
-            - end_pt
-            - walk_distance
-            - step_type
-          properties:
-            start_pt:
-              description: The station we are transfering from.
-              allOf:
-                - $ref: '#/components/schemas/Station'
-            end_pt:
-              description: The station we are transfering to.
-              allOf:
-                - $ref: '#/components/schemas/Station'
-            walk_distance:
-              description: The distance walked in this step.
-              type: integer
-              format: int32
-            step_type:
-              type: string
-              enum:
-                - walk_transfer
-    DestinationWalkStep:
-      description: A step representing walking from a station to a destination.
-      allOf:
-        - $ref: '#/components/schemas/RouteStep'
-        - type: object
-          required:
-            - start_pt
-            - end_pt
-            - walk_distance
-            - step_type
-          properties:
-            start_pt:
-              description: The station we are starting at.
-              allOf:
-                - $ref: '#/components/schemas/Station'
-            end_pt:
-              description: The destination we walk to.
-              allOf:
-                - $ref: '#/components/schemas/Destination'
-            walk_distance:
-              description: The distance we walk between the final station and the destination.
-              type: integer
-              format: int32
-            step_type:
-              type: string
-              enum:
-                - walk_dest
-    FullRouteWalkStep:
-      description: A step representing walking from the start location to a destination without stopping.
-      allOf:
-        - $ref: '#/components/schemas/RouteStep'
-        - type: object
-          required:
-            - start_pt
-            - end_pt
-            - walk_distance
-            - step_type
-          properties:
-            start_pt:
-              description: The inputted start location.
-              allOf:
-                - $ref: '#/components/schemas/Start'
-            end_pt:
-              description: The final destination.
-              allOf:
-                - $ref: '#/components/schemas/Destination'
-            walk_distance:
-              description: The distance we walk between the start location and the final destination.
-              type: integer
-              format: int32
-            step_type:
-              type: string
-              enum:
-                - walk_full_route
+                - walk
     TransitStep:
       description: A step representing using a form of public transit.
       allOf:
@@ -404,6 +308,7 @@ components:
                 - ferry
                 - misc
             step_type:
+              description: TransitSteps have a "step_type" value of "transit".
               type: string
               enum:
                 - transit
@@ -413,6 +318,13 @@ components:
       required:
         - latitude
         - longitude
+        - type
+      discriminator:
+        propertyName: type
+        mapping:
+          input: '#/components/schemas/InputLocation'
+          station: '#/components/schemas/Station'
+          returned: '#/components/schemas/ReturnedLocation'
       properties:
         latitude:
           type: number
@@ -426,11 +338,26 @@ components:
           minimum: -180
           maximum: 180
           description: The longitude of the location.
-    Start:
+        "type":
+          type: string
+          description: The type of location this is.
+          enum:
+            - input
+            - station
+            - returned
+    InputLocation:
       description: The location passed in to the method.
       allOf:
         - $ref: "#/components/schemas/Location"
         - type: object
+          required:
+            - type
+          properties:
+            "type":
+              type: string
+              description: Input locations have a "type" value of "input".
+              enum:
+                - input
     Station:
       description: A public transit station.
       allOf:
@@ -438,11 +365,17 @@ components:
         - type: object
           required:
             - name
+            - type
           properties:
             name:
               type: string
               description: The name of the station, like "23rd and 2nd".
-    Destination:
+            "type":
+              type: string
+              description: Stations have a "type" value of "station".
+              enum:
+                - station
+    ReturnedLocation:
       description: A non-station location that meets a method's query parameters.
       allOf:
         - $ref: "#/components/schemas/Location"
@@ -450,6 +383,7 @@ components:
           required:
             - name
             - categories
+            - type
           properties:
             name:
               type: string
@@ -459,3 +393,8 @@ components:
               description: A list of keyword-style categories that apply to this location, like "Park".
               items:
                 type: string
+            "type":
+              type: string
+              description: ReturnedLocations have a "type" value of "returned".
+              enum:
+                - returned
