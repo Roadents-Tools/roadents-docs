@@ -6,12 +6,6 @@
 {{~}}
 
 
-{{? data.longDescs }}
-#### Detailed descriptions
-{{~ data.parameters :p}}{{? p.shortDesc !== p.description}}
-**{{=p.name}}**: {{=p.description}}{{?}}
-{{~}}
-{{?}}
 
 {{~ data.parameters :p}}
 

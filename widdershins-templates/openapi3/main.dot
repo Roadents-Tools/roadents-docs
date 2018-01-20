@@ -21,6 +21,9 @@ Base URLs:
 {{? data.api.info.contact}}{{? data.api.info.contact.email}}Email: <a href="mailto:{{=data.api.info.contact.email}}">{{=data.api.info.contact.name || 'Support'}}</a> {{?}}{{? data.api.info.contact.url}}Web: <a href="{{=data.api.info.contact.url}}">{{= data.api.info.contact.name || 'Support'}}</a> {{?}}{{?}}
 {{? data.api.info.license}}{{? data.api.info.license.url}}License: <a href="{{=data.api.info.license.url}}">{{=data.api.info.license.name}}</a>{{??}} License: {{=data.api.info.license.name}}{{?}}{{?}}
 
+<aside class="notice">Note that the API is currently in Beta, and as such is
+  subject to change significantly and often.</aside>
+
 {{? data.api.components && data.api.components.securitySchemes }}
 {{#def.security}}
 {{?}}
@@ -65,13 +68,24 @@ Base URLs:
 ```
 
 {{ var enums = []; }}
+{{ var enumgroups = []; }}
 {{ var blocks = data.utils.schemaToArray(origSchema,-1,{trim:true,join:true},data); }}
 {{ for (var block of blocks) {
      for (var p of block.rows) {
        if (p.schema && p.schema.enum) {
+         p.modtype = p.safeType + ' (enum)';
          for (var e of p.schema.enum) {
            enums.push({name:p.name,value:e});
+           if(enumgroups.filter(a => a.name === p.name).length === 0) {
+             enumgroups.push({name : p.name, values : []});
+           }
+           var existing = enumgroups.find(a => a.name === p.name);
+           var indd = enumgroups.indexOf(existing);
+           enumgroups[indd].values.push(e);
          }
+       }
+       else {
+         p.modtype = p.safeType;
        }
      }
    }
@@ -81,9 +95,9 @@ Base URLs:
 
 {{~ blocks.filter(b => {return b.rows.filter(p => {return p.safeType != 'object'|| p.required === true || p.description}).length > 0}) :block}}
 {{? !block.title }}{{??}}*{{= block.title}}*{{= '\n\n'}}{{?}}
-{{? block.rows.filter(p => {return p.safeType != 'object'|| p.required === true || p.description}).length}}|Name|Type|Required|Description|
-|------------------|---|---|---|{{?}}
-{{~ block.rows :p}}{{? p.safeType != 'object'|| p.required === true || p.description}}|{{=p.displayName.replace("»", "")}}|{{=p.safeType}}|{{=p.required}}|{{=p.description||'No description'}}|
+{{? block.rows.filter(p => {return p.safeType != 'object'|| p.required === true || p.description}).length}}|Name|Type|Description|
+|------------------|---|---|{{?}}
+{{~ block.rows :p}}{{? p.safeType != 'object'|| p.required === true || p.description}}|{{=p.displayName.replace("»", "")}}|{{=p.modtype}}|{{=p.description||'No description'}}|
 {{?}}{{~}}
 {{~}}
 {{? (blocks[0].rows.length === 0) && (blocks.length === 1) }}
@@ -93,10 +107,13 @@ Base URLs:
 {{? enums.length > 0 }}
 #### Enumerated Values
 
+{{~ enumgroups : eg}}
 |Property|Value|
 |---|---|
-{{~ enums :e}}|{{=e.name}}|{{=e.value}}|
+{{~ eg.values :e}}|{{=eg.name}}|{{=e}}|
 {{~}}
+{{~}}
+
 
 {{?}}
 
