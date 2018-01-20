@@ -1,38 +1,51 @@
 openapi: 3.0.0
 info:
-  version: 0.1.0
+  version: 0.1.1
   title: Reroute API
   description: >
-    The API to use Reroute's set of time-based navigation services.
-
-
-    Note that the API is currently in Beta, and therefore this document
-    is subject to change. Currently only the Generator algorithm is
-    available, but all other algorithms will be introduced into the Beta
-    shortly.
+    The Reroute API describes a group of HTTP endpoints to run a variety of
+    public transit routing algorithms. These include things like finding possible
+    round trips in time constraints, finding reachable areas, optimizing routes,
+    etc.
+    Methods are called using the HTTP GET method. Arguements are passed directly
+    in the URL as URL Query Parameters; the only header is x-api-key, which is
+    used for the API key to ascociate the call to.
+    Most methods rely on some sort of branching algorithm; as such, most of them
+    take some sort of initial location and initial time. Locations are always
+    passed using 2 separate parameters, ```latitude``` and ```longitude```.
+    These are passed as signed floating point numbers; ```latitude``` ranges
+    from -90.0 to 90.0 and ```longitude``` ranges from -180.0 to 180.0.
+    Values like ```90.0 E``` do not work.
+    All values representing lengths of time are passed in seconds. If passed
+    as a float they will be truncated to the nearest integer second value. All
+    values representing specific points in time are passed as seconds since
+    January 1st, 1970 GMT.
   contact:
     name: Reroute API Team
     url: http://www.rerouteapi.net
 
 servers:
-  - url: 'https://api.rerouteapi.net/api/v0'
+  - url: 'https://api.rerouteapi.net/v0'
 security:
   - ApiKeyAuth : []
 paths:
   /generator:
     get:
-      summary: Runs the Generator route-finding algorithm.
+      summary: Finds all desired locations reachable in a given time.
       description: >
-        Finds all routes meeting a given query that can be reached in a certain
-        time from a given starting point. The routes can be filtered and
-        limited in a variety of ways.
+        The Generator algorithm finds routes reachable in a given time.
+        The user passes their starting location, how long they would like to
+        travel, and what they are looking for and the Generator algorithms gives
+        them all the places they can reach and the steps to get to them.
+        The algorithm also allows for a variety of filters to allow the caller
+        to only get the routes they want and nothing they do not.
       operationId: Generator
       tags:
         - API Methods
       parameters:
         - name: latitude
           in: query
-          description: The latitude of the starting location.
+          description: The latitude the user starts at.
           required: true
           schema:
             type: number
@@ -41,7 +54,7 @@ paths:
             maximum: 90
         - name: longitude
           in: query
-          description: The longitude of the starting location.
+          description: The longitude the user starts at.
           required: true
           schema:
             type: number
@@ -50,13 +63,15 @@ paths:
             maximum: 180
         - name: query
           in: query
-          description: The keyword to use to search for destinations.
+          description: >
+            What the user is searching for. This can be anything from "food"
+            and "Walmart" to "Virginia Court House" or "Caltech".
           required: true
           schema:
             type: string
         - name: total_time
           in: query
-          description: The maximum seconds any route can take.
+          description: The maximum time the user wants to travel for, in seconds.
           required: true
           schema:
             type: integer
@@ -65,7 +80,9 @@ paths:
             maximum: 10800
         - name: departure_time
           in: query
-          description: The time to start at, in seconds since midnight, Jan 1, 1970 GMT. Can also pass -1 to use the current time.
+          description: >
+            The time to start at, in seconds since midnight, Jan 1, 1970 GMT.
+            Can also pass -1 to use the current time.
           required: false
           schema:
             type: integer
@@ -74,46 +91,22 @@ paths:
             default: -1
         - name: max_walk_time
           in: query
-          description: The maximum amount of seconds spent walking over the course of a route.
+          description: >
+            The maximum amount of time the user wants to walk for, in seconds.
           required: false
           schema:
             type: integer
             format: int64
-        - name: max_step_walk_time
-          in: query
-          description: The maximum amount of seconds spent walking between any 2 points.
-          required: false
-          schema:
-            type: integer
-            format: int64
-            minimum: 60
-            maximum: 900
-            default: 300
         - name: max_wait_time
           in: query
-          description: The maximum seconds spent waiting for transit over the course of a route.
+          description: >
+            The maximum amount of time the user wants to spend waiting for
+            transit, in seconds.
           required: false
           schema:
             type: integer
             format: int64
             minimum: 60
-        - name: max_step_wait_time
-          in: query
-          description: The maximum seconds spent waiting for transit between any 2 points.
-          required: false
-          schema:
-            type: integer
-            format: int64
-            minimum: 60
-        - name: min_step_wait_time
-          in: query
-          description: The minimum seconds spent waiting for transit when taking transit.
-          required: false
-          schema:
-            type: integer
-            format: int64
-            minimum: 30
-            default: 60
         - name: min_dist
           in: query
           description: The minimum distance, in meters, that a route's destination is from the start location.
@@ -121,7 +114,7 @@ paths:
           schema:
             type: integer
             format: int64
-            minimum: 10
+            minimum: 0
         - name: steps
           in: query
           description: The maximum number of steps over the course of the route.
@@ -144,7 +137,7 @@ paths:
             default: 50
       responses:
         '200':
-          description: The list of routes meeting the passed filters.
+          description: The list of routes that satisfy the passed query.
           content:
             application/json:
               schema:
@@ -152,7 +145,7 @@ paths:
                 description: The routes meeting the query.
                 items:
                   $ref: '#/components/schemas/Route'
-        'default':
+        '5XX':
           description: unexpected error
           content:
             application/json:
@@ -160,53 +153,48 @@ paths:
                 type: object
                 description: An HTTP error.
                 required:
-                  - code
                   - message
                 properties:
-                  code:
-                    type: integer
-                    format: int32
-                    description: The HTTP status code.
                   message:
                     type: string
                     description: The text of the error.
 components:
   securitySchemes:
     ApiKeyAuth:
-      description: "The API key to use for usage tracking."
-      type: "apiKey"
-      name: "x-api-key"
-      in: "header"
+      description: The API key to use for usage tracking.
+      type: apiKey
+      name: x-api-key
+      in: header
   schemas:
     Route:
       type: object
-      description: A series of steps leading from one location to another.
+      description: A series of steps a user can take to reach a destination.
       required:
-        - start_pt
-        - end_pt
+        - start_point
+        - end_point
         - start_time
         - total_time
         - steps
       properties:
-        start_pt:
+        start_point:
           description: The location the route starts at.
           allOf:
             - $ref: '#/components/schemas/Location'
-        end_pt:
+        end_point:
           description: The location the route ends at.
           allOf:
             - $ref: '#/components/schemas/Location'
         start_time:
           type: integer
           format: int64
-          description: The time the route begins, in seconds since midnight Jan 1, 1970, GMT.
+          description: The time the route begins, in seconds since midnight Jan 1, 1970.
         total_time:
           type: integer
           format: int64
-          description: The number of seconds the route takes.
+          description: How long the route takes, in seconds.
         steps:
           type: array
-          description: The list of steps to get from start_pt to end_pt.
+          description: The steps to get from start_point to end_point.
           items:
             $ref: '#/components/schemas/RouteStep'
     RouteStep:
@@ -215,34 +203,39 @@ components:
       required:
         - step_type
         - total_time
-        - start_pt
-        - end_pt
+        - start_point
+        - end_point
       discriminator:
         propertyName: step_type
         mapping:
           transit: '#/components/schemas/TransitStep'
           walk: '#/components/schemas/WalkStep'
+          stop: '#/components/schemas/PitstopStep'
       properties:
         total_time:
           type: integer
           format: int64
-          description: Time in seconds spend in this step.
+          description: How long this step takes, in seconds.
         step_type:
-          description: The type of step this is.
+          description: >
+            The type of step this is. Currently this can be one of
+            ```transit``` for a TransitStep, ```walk``` for a WalkStep, or
+            ```stop``` for a PitstopStep.
           type: string
           enum:
             - transit
             - walk
-        start_pt:
-          description: The place that this step starts at.
+            - stop
+        start_point:
+          description: The location that this step starts at.
           allOf:
             - $ref: "#/components/schemas/Location"
-        end_pt:
-          description: The place that this step ends at.
+        end_point:
+          description: The location that this step ends at.
           allOf:
             - $ref: "#/components/schemas/Location"
     WalkStep:
-      description: A step representing walking away from the Start location.
+      description: A step where the user walks from one location to another.
       allOf:
         - $ref: '#/components/schemas/RouteStep'
         - type: object
@@ -251,22 +244,23 @@ components:
             - step_type
           properties:
             walk_distance:
-              description: The distance walked in this step.
+              description: The distance the user walks, in meters.
               type: integer
               format: int32
             step_type:
-              description: WalkSteps have a "step_type" value of "walk".
+              description: WalkSteps have a ```step_type``` value of ```walk```.
               type: string
               enum:
                 - walk
     TransitStep:
-      description: A step representing using a form of public transit.
+      description: >
+        A step in which the user takes a form of public transit, like
+        a bus or train. Because of this ```start_point``` and ```end_point```
+        are guranteed to be of type ```Station```.
       allOf:
         - $ref: '#/components/schemas/RouteStep'
         - type: object
           required:
-            - start_pt
-            - end_pt
             - wait_time
             - travel_time
             - agency
@@ -275,34 +269,35 @@ components:
             - transit_type
             - step_type
           properties:
-            start_pt:
-              description: The station we begin the step at.
-              allOf:
-                - $ref: '#/components/schemas/Station'
-            end_pt:
-              description: The station we end the step at.
-              allOf:
-                - $ref: '#/components/schemas/Station'
             wait_time:
-              description: The number of seconds waiting at start_pt for the transit method to arrive.
+              description: >
+                How long the user is waiting at ```start_point``` between walking
+                and their bus/train/ferry/etc beginning to travel to
+                ```end_point```, in seconds.
               type: integer
               format: int32
             travel_time:
-              description: The number of seconds spent travelling in the public transit method.
+              description: >
+                How long the bus/train/ferry/etc takes to travel from
+                ```start_point``` to ```end_point```, in seconds.
               type: integer
               format: int32
             agency:
-              description: The name of the agency that is used to travel in this step.
+              description: The agency that controls this bus route.
               type: string
             route:
-              description: The name of the route taken in this step.
+              description: The name of the route taken.
               type: string
             stops:
-              description: The number of stops travelled in this step.
+              description: >
+                The number of stops travelled between ```start_point``` and
+                ```end_point```.
               type: integer
               format: int32
             transit_type:
-              description: The type of transit used in this step.
+              description: >
+                The type of transit used in this step. Can be one of ```bus```,
+                ```train```, ```ferry```, or ```misc```.
               type: string
               enum:
                 - bus
@@ -310,19 +305,44 @@ components:
                 - ferry
                 - misc
             step_type:
-              description: TransitSteps have a "step_type" value of "transit".
+              description: TransitSteps have a ```step_type``` value of ```transit```.
               type: string
               enum:
                 - transit
+    PitstopStep:
+      description: >
+        This step represents the user not moving from a location for an amount
+        of time. This step is used in routes generated by algorithms like
+        LunchBreak, where the route contains a non-```Station``` location in
+        the middle of the steps. ```start_point``` and ```end_point``` represent
+        the location the user will be stopping at, and ```total_time``` is how
+        long the user remains at that location. For example, if the user wants
+        to go to a restaurant, eat, and then go to class, the route will contain
+        a ```PitstopStep``` where ```start_point``` and ```end_point``` are both
+         the restaurant and ```total_time``` is the time spent eating.
+      allOf:
+        - $ref: '#/components/schemas/RouteStep'
+        - type: object
+          required:
+            - step_type
+          properties:
+            step_type:
+              description: PitstopSteps have a ```step_type``` value of ```stop```.
+              type: string
+              enum:
+                - stop
     Location:
-      description: A point on the planet earth.
+      description: >
+        A location of any possible type. While all locations contain these fields,
+        some may contain more; this is dependent on the type of location this is,
+        stored in the ```location_type``` field.
       type: object
       required:
         - latitude
         - longitude
-        - type
+        - location_type
       discriminator:
-        propertyName: type
+        propertyName: location_type
         mapping:
           input: '#/components/schemas/InputLocation'
           station: '#/components/schemas/Station'
@@ -340,63 +360,75 @@ components:
           minimum: -180
           maximum: 180
           description: The longitude of the location.
-        "type":
+        location_type:
           type: string
-          description: The type of location this is.
+          description: >
+            The type of location this is. Can be one of ```input```,
+            ```station```, or ```returned``` depending on if this location was
+            passed by the caller, a valid location meeting the caller's query,
+            or a station to travel between the two.
           enum:
             - input
             - station
             - returned
     InputLocation:
-      description: The location passed in to the method.
+      description: >
+        The location the caller passed in to the method. This has no extra
+        information, and has a ```location_type``` value of ```input```.
       allOf:
         - $ref: "#/components/schemas/Location"
         - type: object
           required:
-            - type
+            - location_type
           properties:
-            "type":
+            location_type:
               type: string
-              description: Input locations have a "type" value of "input".
+              description: >
+                Input locations have a ```location_type``` value of ```input```.
               enum:
                 - input
     Station:
-      description: A public transit station.
+      description: >
+        A public transit station. In addition to standard fields, it also has
+        a ```name``` field. It has a ```location_type``` value of ```station```.
       allOf:
         - $ref: "#/components/schemas/Location"
         - type: object
           required:
             - name
-            - type
+            - location_type
           properties:
             name:
               type: string
               description: The name of the station, like "23rd and 2nd".
-            "type":
+            location_type:
               type: string
-              description: Stations have a "type" value of "station".
+              description: Stations have a ```location_type``` value of ```station```.
               enum:
                 - station
     ReturnedLocation:
-      description: A non-station location that meets a method's query parameters.
+      description: >
+        A location found by the method to meet the given requirements. It has
+        a name and a series of tags in addition to the standard ```location```
+        field.
       allOf:
         - $ref: "#/components/schemas/Location"
         - type: object
           required:
             - name
             - categories
-            - type
+            - location_type
           properties:
             name:
               type: string
               description: The name of this location.
-            categories:
+            tags:
               type: array
-              description: A list of keyword-style categories that apply to this location, like "Park".
+              description: A list of keyword-style categories that apply to this location, like "park".
               items:
                 type: string
-            "type":
+            location_type:
               type: string
-              description: ReturnedLocations have a "type" value of "returned".
+              description: ReturnedLocations have a ```location_type``` value of ```returned```.
               enum:
                 - returned
