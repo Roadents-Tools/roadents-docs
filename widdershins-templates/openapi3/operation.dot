@@ -45,3 +45,11 @@
 {{??}}
 {{#def.authentication_none}}
 {{?}}
+
+{{? data.operation["x-widdershins-warn"] }}
+{{~data.operation["x-widdershins-warn"] : warn}}
+<aside class="warning">
+{{=warn}}
+</aside>
+{{~}}
+{{?}}
