@@ -22,7 +22,9 @@ Base URLs:
 {{? data.api.info.license}}{{? data.api.info.license.url}}License: <a href="{{=data.api.info.license.url}}">{{=data.api.info.license.name}}</a>{{??}} License: {{=data.api.info.license.name}}{{?}}{{?}}
 
 <aside class="notice">Note that the API is currently in Beta, and as such is
-  subject to change significantly and often.</aside>
+  subject to change. Not all methods listed here are currently available for public use; all unavailable methods
+  will be listed as such in their documentation.
+</aside>
 
 {{? data.api.components && data.api.components.securitySchemes }}
 {{#def.security}}
