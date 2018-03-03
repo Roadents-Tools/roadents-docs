@@ -488,7 +488,11 @@ html, body {
       left: 15px;
       color: #fff; }
   .toc-wrapper .logo {
-    margin-bottom: 0px; }
+    max-width: 115px; /* Half the width of the ToC wrapper*/
+    margin-left: 57.5px; /* Quarter of the width of the ToC wrapper */
+    margin-right: 57.5px; /* Quarter of the width of the ToC wrapper */
+    margin-top: 15px;
+    margin-bottom: 10px; }
   .toc-wrapper .search-results {
     margin-top: 0;
     box-sizing: border-box;
