@@ -158,6 +158,143 @@ paths:
                   message:
                     type: string
                     description: The text of the error.
+  /funnel:
+    get:
+      summary: Finds all desired locations that can reach a given location in a given time.
+      description: >
+        The Funnel algorithm finds routes that allow the user to reach a given
+        location by a certain time. The user passes in the location they want
+        to eventually reach, when they want to reach the location by, how
+        long they want to take to get there, and the kind of places they want to
+        start at. The algorithm will then return routes starting at a location
+        meeting their request and ending at their given location before the
+        end time and taking less time than the maximum specified. Currently the
+        algorithm will attempt to end the route as close to the end time as
+        possible, however due the nature of public transit systems it is unlikely
+        that many if any routes end at the provided end time.
+        The algorithm provides all the same filters that Generator does,
+        though some may behave slightly differently due to Funnel's "reversed"
+        nature.
+      operationId: Funnel
+      x-widdershins-warn:
+        - Funnel is currently not available in the public beta. If you would like to use Funnel before it is available to the general public, please contact Reroute directly.
+      tags:
+        - API Methods
+      parameters:
+        - name: latitude
+          in: query
+          description: The latitude the user will end up at.
+          required: true
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+        - name: longitude
+          in: query
+          description: The longitude the user will end up at.
+          required: true
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+        - name: query
+          in: query
+          description: >
+            What the user is searching for. This can be anything from "food"
+            and "Walmart" to "Virginia Court House" or "Caltech".
+          required: true
+          schema:
+            type: string
+        - name: total_time
+          in: query
+          description: The maximum time the user wants to travel for, in seconds.
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 60
+            maximum: 10800
+        - name: arrival_time
+          in: query
+          description: >
+            The time to ends at, in seconds since midnight, Jan 1, 1970 GMT.
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: -1
+            default: -1
+        - name: max_walk_time
+          in: query
+          description: >
+            The maximum amount of time the user wants to walk for, in seconds.
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: max_wait_time
+          in: query
+          description: >
+            The maximum amount of time the user wants to spend waiting for
+            transit, in seconds.
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 60
+        - name: min_dist
+          in: query
+          description: The minimum distance, in meters, that a route's destination is from the start location.
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+        - name: steps
+          in: query
+          description: The maximum number of steps over the course of the route.
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+            maximum: 10
+            default: 5
+        - name: limit
+          in: query
+          description: The maximum number of routes to return.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: The list of routes that satisfy the passed query.
+          content:
+            application/json:
+              schema:
+                type: array
+                description: The routes meeting the query.
+                items:
+                  $ref: '#/components/schemas/Route'
+        '5XX':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                description: An HTTP error.
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    description: The text of the error.
 components:
   securitySchemes:
     ApiKeyAuth:
