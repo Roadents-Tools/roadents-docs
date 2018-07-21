@@ -1,15 +1,14 @@
 openapi: 3.0.0
 info:
-  version: 0.1.1
-  title: Reroute API
+  version: 0.0.1
+  title: Roadents API
   description: >
-    The Reroute API describes a group of HTTP endpoints to run a variety of
+    The Roadents API describes a group of HTTP endpoints to run a variety of
     public transit routing algorithms. These include things like finding possible
     round trips in time constraints, finding reachable areas, optimizing routes,
     etc.
     Methods are called using the HTTP GET method. Arguements are passed directly
-    in the URL as URL Query Parameters; the only header is x-api-key, which is
-    used for the API key to ascociate the call to.
+    in the URL as URL Query Parameters.
     Most methods rely on some sort of branching algorithm; as such, most of them
     take some sort of initial location and initial time. Locations are always
     passed using 2 separate parameters, ```latitude``` and ```longitude```.
@@ -20,26 +19,21 @@ info:
     as a float they will be truncated to the nearest integer second value. All
     values representing specific points in time are passed as seconds since
     January 1st, 1970 GMT.
-  contact:
-    name: Reroute API Team
-    url: http://www.rerouteapi.net
 
 servers:
-  - url: 'https://api.rerouteapi.net/v0'
-security:
-  - ApiKeyAuth : []
+  - url: '[URL PATH HERE]'
 paths:
-  /generator:
+  /donut:
     get:
       summary: Finds all desired locations reachable in a given time.
       description: >
-        The Generator algorithm finds routes reachable in a given time.
+        The Donut algorithm finds routes reachable in a given time.
         The user passes their starting location, how long they would like to
-        travel, and what they are looking for and the Generator algorithms gives
+        travel, and what they are looking for and the Donut algorithms gives
         them all the places they can reach and the steps to get to them.
         The algorithm also allows for a variety of filters to allow the caller
         to only get the routes they want and nothing they do not.
-      operationId: Generator
+      operationId: Donut
       tags:
         - API Methods
       parameters:
@@ -158,11 +152,11 @@ paths:
                   message:
                     type: string
                     description: The text of the error.
-  /funnel:
+  /weasel:
     get:
       summary: Finds all desired locations that can reach a given location in a given time.
       description: >
-        The Funnel algorithm finds routes that allow the user to reach a given
+        The Weasel algorithm finds routes that allow the user to reach a given
         location by a certain time. The user passes in the location they want
         to eventually reach, when they want to reach the location by, how
         long they want to take to get there, and the kind of places they want to
@@ -172,12 +166,10 @@ paths:
         algorithm will attempt to end the route as close to the end time as
         possible, however due the nature of public transit systems it is unlikely
         that many if any routes end at the provided end time.
-        The algorithm provides all the same filters that Generator does,
-        though some may behave slightly differently due to Funnel's "reversed"
+        The algorithm provides all the same filters that Donut does,
+        though some may behave slightly differently due to Weasel's "reversed"
         nature.
-      operationId: Funnel
-      x-widdershins-warn:
-        - Funnel is currently not available in the public beta. If you would like to use Funnel before it is available to the general public, please contact Reroute directly.
+      operationId: Weasel
       tags:
         - API Methods
       parameters:
@@ -297,11 +289,6 @@ paths:
                     description: The text of the error.
 components:
   securitySchemes:
-    ApiKeyAuth:
-      description: The API key to use for usage tracking.
-      type: apiKey
-      name: x-api-key
-      in: header
   schemas:
     Route:
       type: object
